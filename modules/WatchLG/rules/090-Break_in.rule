@@ -1,0 +1,10 @@
+RULE="Bad-SSH-Prot"
+Pattern=': Bad protocol version identification'
+#--------------
+if [[ "$REPLY" =~ "$Pattern" ]]; then inject; return $?; fi
+
+RULE="Bad-SSH-Nego"
+Pattern=': Unable to negotiate with'
+#--------------
+if [[ "$REPLY" =~ "$Pattern" ]]; then inject; return $?; fi
+

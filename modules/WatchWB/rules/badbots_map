@@ -1,0 +1,57 @@
+#
+# - badbots_map -
+#    WB module
+#
+# Note, that the provided expressions are REGEX
+# for the BASH match operator (=~)
+# I.e. spaces (' ') and dots ('.')) must be escaped.
+#
+Go-http-client/
+AiHitBot
+Cliqzbot
+CodaBot
+linkdexbot
+SearchmetricsBot
+SISTRIX
+CareerBot
+GrapeshotCrawler
+iCjobs
+magpie-crawler
+proximic
+QuerySeekerSpider
+Vagabondo
+WBSearchBot
+ZoominfoBot
+@expanseinc.com
+Expanse,\ 
+;\ Dataprovider.com
+compatible;\ PetalBot;
+;\ SemrushBot
+compatible;\ AhrefsBot
+compatible;\ BacklinksExtendedBot
+;\ MJ12bot
+;\ adscanner
+compatible;\ DotBot
+;\ SeznamBot
+compatible;\ MegaIndex.ru
+;\ Mail.RU_Bot
+;\ WellKnownBot
+compatible;\ NetcraftSurveyAgent
+compatible;\ BLEXBot
+compatible;\ Barkrowler
+serpstatbot
+facebookexternalhit
+compatible;\ SEOkicks
+compatible;\ BLEXBot
+python-requests
+pawning-AI
+compatible;\ GeedoBot
+compatible;\ DataForSeoBot
+compatible;\ Bytespider
+compatible;\ ClaudeBot
+CensysInspect
+meta-externalagent
+compatible;\ ImagesiftBot
+compatible;\ TikTokSpider
+compatible; Barkrowler/
+compatible; InternetMeasurement/

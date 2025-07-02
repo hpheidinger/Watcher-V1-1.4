@@ -1,0 +1,16 @@
+# - 090-Fakehost.rule -
+## Note that Pattern is not enclosed in double-quotes!
+# This one makes a real REGEX (not string) match
+RULE=Fakehost
+Pattern='reverse mapping checking getaddrinfo for .+ \[.+\] failed\.$'
+#---------------
+#if [[ "$REPLY" =~ $Pattern ]]; then inject 3; return $?; fi
+if [[ "$REPLY" =~ $Pattern ]]; then CLASS=FAKEHOST; kickoff; return $?; fi
+
+# Log message (sshd)
+#2025-03-04T19:08:34.970 WatchLG[1551719]: [Loop: 1812] 'Mar  4 19:08:34 vmd123606.contaboserver.net sshd[1796852]: Address 171.251.23.55 maps to dynamic-ip-adsl.viettel.vn, but this does not map back to the address.'
+
+RULE=Fakehost2
+Pattern=', but this does not map back to the address.'
+if [[ "$REPLY" =~ "$Pattern" ]]; then CLASS=FAKEHOST; kickoff; return $?; fi
+

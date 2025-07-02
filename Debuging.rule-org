@@ -1,0 +1,30 @@
+# 001-Debugging.rule
+# Special ruleset to set debug flags dynamicly
+#
+# Debug settings .............
+# Return code 241 is individual for these actions in the post processor
+RULE=NO_DEBUG
+Pattern="@nodebug"
+if [[ "$REPLY" =~ "$Pattern" ]]; then setdebug $Pattern; return 241; fi
+
+RULE=DEBUG2_ON
+Pattern="@debug2"
+if [[ "$REPLY" =~ "$Pattern" ]]; then setdebug $Pattern; return 241; fi
+
+# Careful" Must come after 'more speific' ... or will eat them up
+RULE=DEBUG_ON
+Pattern="@debug"
+if [[ "$REPLY" =~ "$Pattern" ]]; then setdebug $Pattern; return 241; fi
+
+RULE=NO_TRACE
+Pattern="@notrace"
+if [[ "$REPLY" =~ "$Pattern" ]]; then setdebug $Pattern; return 241; fi
+
+RULE=TRACE
+Pattern="@trace"
+if [[ "$REPLY" =~ "$Pattern" ]]; then setdebug $Pattern; return 241; fi
+
+RULE=TRACE
+Pattern="@alloff"
+if [[ "$REPLY" =~ "$Pattern" ]]; then setdebug $Pattern; return 241; fi
+

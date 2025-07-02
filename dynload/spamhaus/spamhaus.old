@@ -1,0 +1,131 @@
+#!/bin/bash
+if [[ "$1" == 'debug'  ]]; then set -x;		_DEBUG=$1; shift; fi
+if [[ "$1" == 'debug2' ]]; then set -xvT;	_DEBUG=$1; shift; fi
+if [[ "$1" == 'trace'  ]]; then 		_TRACE=$1; shift; fi
+####################################################################
+PROC_START=`date +%s%N`
+#
+# Plug Spamhaus DROP lists dynamically into firewall ...
+#
+#-------------------------
+REALPATH=`realpath $0`
+WHERE=`dirname $REALPATH`
+ME=`basename $REALPATH`
+cd $WHERE
+. ../../system.conf
+. ../../common.conf
+. ../../common.bashlib
+#-------------------------
+. $ME.conf
+
+CHANGED=0
+CHANGED_FILES=""
+#DROPFILES="drop.txt edrop.txt"
+DROPFILES="drop.txt"	# edrop merged into drop, APR-2024
+LOADFILE=$POOL/ipset.Loadfile-$ME
+
+trap cleanup 0 1 2 9 15
+
+cleanup() {
+local funtag="[${FUNCNAME[0]}]"
+
+	PROC_END=`date +%s%N`
+	PROC_TIME=`echo "scale=3; ($PROC_END - $PROC_START)/10^6" | bc`
+	logger "$ME[$$]: Finished: $PROC_TIME ms. Changed: '$CHANGED_FILES'"
+	printf  " » %-15s ... finished in %8.2f ms\n" $ME $PROC_TIME
+}
+
+fetch_drop() {
+local funtag="[${FUNCNAME[0]}]"
+
+	wget -N -q "$HTTPADR/$1"
+	return $?
+}
+
+load_ipset() {
+local funtag="[${FUNCNAME[0]}]"
+
+	# False (1) if not found ...
+	if ! $IPSET -n list $MYSET >/dev/null 2>&1
+	then mk-ipset $MYSET "$SETTYP" "$SETOPTS" >/dev/null 2>&1
+	fi
+
+	$IPSET -file $3 restore
+}
+
+#
+# Read spamhaus drop file and output an ipset loadfile
+#
+SH2FW() {
+local funtag="[${FUNCNAME[0]}]"
+
+	awk -v filetype=$FTYPE -v loadfile=$2 -v setname=$MYSET -v settyp="$SETTYP" -v setopts="$SETOPTS" '
+	BEGIN		{ SUFFIX="comment spamhaus,"filetype }
+	/^[ \t]*;/	{ next }
+			{
+				split ($0,parts,";")
+				IP=parts[1]
+				arr[IP]=IP 
+			}
+	END	 {
+			printf "-exist create %s %s %s\n", setname, settyp, setopts > loadfile
+
+			for (addr in arr) {
+			#	printf "%s\n", addr >> "DROPLIST-"filetype
+				printf "add %s %s %s\n",setname,addr,SUFFIX >> loadfile
+			}
+	}
+	' $1
+}
+
+
+get_update() {
+local	funtag="[${FUNCNAME[0]}]"
+local	exp_date
+local	exp_left
+local	loadout="$LOADFILE-$FTYPE"
+
+	#
+	# See for the expiration date
+	#
+	spamhaus_date=`grep -E '^(; Expires:)' $1 | cut -f2 -d","`
+	exp_date=`date +%s -d "$spamhaus_date"`
+	exp_left=$(( ($exp_date - `date +%s`)/60 ))
+
+	# Ignore if not expired when present
+	if [ $exp_left -lt 0 ] 
+	then 	: echo "$1 expired ... updating ..."
+		logger "$ME[$$]: $1 expired ... updating ..."
+
+		if [ -f $1 ]; then mv $1 $1-old; fi
+
+		fetch_drop $1
+		if [ $? -eq 0 ]
+		then	((CHANGED++))
+			CHANGED_FILES="$CHANGED_FILES `basename $loadout`"
+		else	# Reclaim old file and try again later
+			logger "$ME[$$] Fetching '$1' failed ... old file reclaimed"
+			mv $1-old $1
+		fi
+	else
+		logger "$ME[$$]: $1 not due for update ..."
+	fi
+}
+
+#----------------- Main -----------------------
+logger "$ME[$$]: Starting ..."
+
+for drops in `echo $DROPFILES`
+do
+	FTYPE=`basename $drops .txt`
+	
+	# If the file does not exist just get it
+	if [ ! -f $drops ]
+	then fetch_drop $drops
+	else get_update $drops
+	fi
+
+	SH2FW $drops "$LOADFILE-$FTYPE"
+	load_ipset $MYSET "$SETOPTS" "$LOADFILE-$FTYPE"
+	mk-ipset $MYSET "$SETTYP" "$SETOPTS"
+done

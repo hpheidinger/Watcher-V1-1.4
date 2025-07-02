@@ -1,0 +1,425 @@
+#
+# Private BASHlib for Watcher-Report3	- Efficiency report
+#
+SQL="sqlite3 $POOL/$ME"
+
+#declare -A grands=([records]=0 [cidrs]=0 [plain]=0 [nodes]=0 [label]='')
+#declare -A whites=([records]=0 [cidrs]=0 [plain]=0 [nodes]=0 [label]='')
+
+_LABELW=34
+OUTFORM="%-34s : %8d %8d %8d %'15d\n"
+TOTFORM="%34s » %8d %8d %8d %'15d\n"
+DETFORM="%34s . %8d %8d %8d %'15d\n"
+COLFORM="%34s | %8s %8s %8s %15s\n"
+
+
+DB_preload() {
+local funtag="[${FUNCNAME[0]}]"
+local everything=$(ipset l | grep -E '^[1-9]|Name:')
+
+#	ALL=$everything		# make a global 'ALL' for testing
+
+	awk -v TLchains="$TLchains" '
+	BEGIN {
+		# Split TLchains into array
+		split(TLchains, tlchain_array, " ")
+
+		# Collect ipset -> target mapping
+		for (i in tlchain_array) {
+			chain = tlchain_array[i]
+			cmd = "iptables -nL " chain " | grep match-set"
+			while ( (cmd | getline line) > 0 ) {
+				split(line, tmp)
+				target = tmp[1]
+				ipset = tmp[7]
+				target_map[ipset] = target
+				chain_map[ipset] = chain
+			}
+			close(cmd)
+		}
+	}
+
+	/^Name:/ {
+		current_ipset = $2
+		next
+	}
+
+	/^[0-9]/ {
+		# Skip if no current ipset context
+		if (current_ipset == "") next
+
+		member = $1
+		comment_raw = substr($0, index($0, "comment ") + 8)
+		gsub(/^"|"$/, "", comment_raw)
+
+		membertype = (index(member, "/") > 0) ? "CIDR" : "IP"
+
+		# Extract packet count ...
+		match($0, /packets ([0-9]+)/, tmp)
+		packets = tmp[1]
+
+		# Extract byte count ...
+		match($0, /bytes ([0-9]+)/, tmp)
+		bytes = tmp[1]
+
+		print member "," membertype "," current_ipset "," chain_map[current_ipset] "," target_map[current_ipset] "," "\"" comment_raw "\"" "," packets "," bytes
+	}
+	' <<< "$everything" > "$POOL/$ME-import.csv"
+
+	# Optional: add header
+	#sed -i 'member,membertype,ipset,chain,target,comment,packets,bytes' "$POOL/$ME-import.csv"
+
+	# Dump to DB
+	DB_dump "$POOL/$ME-import.csv"
+}
+
+
+DB_dump() {
+local funtag="[${FUNCNAME[0]}]"
+local	Schema="
+	drop table IF EXISTS ipsets;
+	create table ipsets (
+		member		text,			-- IP addr
+		membertype	text,			-- Addr type: IP, CIDR
+		ipset		text,			-- The IPSET
+		chain		text,			-- Master chain: INPUT or FORWARD
+		target		text,			-- Chain target: ACCEPT, DROP, ...
+		comment		text	NOT NULL,
+		packets		integer,		-- members packet count	
+		bytes		integer,		-- members byte	 count
+		PRIMARY KEY	(ipset, member)
+	);"
+
+	echo "$Schema" | $SQL
+
+	$SQL <<-EOF
+	.mode csv
+	.separator ","
+	.import $1 ipsets
+	EOF
+
+	rm -f $1
+}
+
+
+# Draw a section headline
+# $1 headline text
+# $2 character for line
+headline() {
+local funtag="[${FUNCNAME[0]}]"
+local	total=60
+
+	awk -v text="$1" -v tot_width=$total -v char="$2" '
+	BEGIN {
+	prefixlen=5
+	for (i=1; i<=prefixlen; i++) { prefix = prefix char }
+	strlen = length(text);
+	suffixlen = tot_width - length(prefix) - strlen - 1; # "- 2" für die Leerzeichen
+	if (suffixlen < 0) suffixlen = 0;
+	suffix = sprintf("%*s", suffixlen, ""); # Generiere leerzeichen-basiertes Padding
+	gsub(" ", char, suffix);                # Ersetze Leerzeichen mit "-"
+	print ""
+	print prefix " " text " " suffix;
+	}'
+}
+
+
+# Draw a simple separation line
+# $1 character for line
+sepline() {
+local funtag="[${FUNCNAME[0]}]"
+local	total=79
+
+	awk -v tot_width=$total -v char="$1" '
+	BEGIN {
+		for (i=1; i<=tot_width; i++) { line = line char }
+		print line;
+	}'
+}
+
+# Print a section headline
+sec_headline() {
+# $1	Section name
+# $2	character to use
+local funtag="[${FUNCNAME[0]}]"
+local	total=53
+
+	awk -v text="$1" -v tot_width=$total -v char="$2" '
+	BEGIN {
+	prefixlen=5
+	for (i=1; i<=prefixlen; i++) { prefix = prefix char }
+	strlen = length(text);
+	suffixlen = tot_width - length(prefix) - strlen - 1; # "- 2" für die Leerzeichen
+	if (suffixlen < 0) suffixlen = 0;
+	suffix = sprintf("%*s", suffixlen, ""); # Generiere leerzeichen-basiertes Padding
+	gsub(" ", char, suffix);                # Ersetze Leerzeichen mit "-"
+	print ""
+	print prefix " " text " " suffix;
+	}'
+}
+
+
+
+###################################################################
+# Dropped packets determination - Basis for efficiency calculations
+###################################################################
+# Cummulate packets from legal access taken from the WATCGCNT chain
+cummulate_passed_connections() {
+local funtag="[${FUNCNAME[0]}]"
+local	report
+
+	awk '
+	BEGIN { sum=0 }
+	/(tcp dpt:)/	{ sum += $1 }
+	END		{ print sum }
+	' <<< $(iptables -vnL WATCHCNT)
+}
+
+cummulate_passthru_connections() {
+local funtag="[${FUNCNAME[0]}]"
+local	report
+
+	awk '
+	BEGIN { packets=0 }
+	/^[1-9]/	{
+				# Extract packet count ...
+				match($0, /packets ([0-9]+)/, tmp)
+				packets += tmp[1]
+			}
+	END		{ print packets }
+	' <<< $(ipset l passthru)
+}
+
+
+# Determine IPSETs of particular chain type; e.g. DROP
+chaintype() {
+local funtag="[${FUNCNAME[0]}]"
+local	chain="$1"
+local	tmp 
+
+	tmp=$(iptables -nL INPUT | grep "$chain" | grep 'match-set')
+
+	awk '
+		{
+			match($0,/match-set ([^ ]+)/,tmp)
+			set = tmp[1]
+			sets = sets" "set
+		}
+	END	{ print sets }
+	' <<< "$tmp"
+}	
+
+
+report_efficiency () {
+local funtag="[${FUNCNAME[0]}]"
+local	since now watcherup days rest
+local	total_connections=0 total_passed_connections=0
+local	firewall_records efficiency
+local	ipset_name counter
+local	invalid="INVALID"
+
+	FILT_START=$(date +%s%3N)
+	TLchains='INPUT'
+
+	DB_preload
+
+	if [ ! -e $POOL/EFF_MIN ]
+	then echo "100.0" > $POOL/EFF_MIN
+	fi
+
+	if [ ! -e $POOL/EFF_MAX ]
+	then echo "0.0" > $POOL/EFF_MAX
+	fi
+
+	echo "$PRODUCT $REVISION - $ME on $HOSTNAME"
+	headline "Connection attempts of DROPed bandits" =
+
+	read since < $(Masterpath)/START_TIME
+	now=$(date +%s)
+	watcherup=$(( now - since ))
+	echo -n "Since: $(date -d @$since --iso=seconds)"
+	days=$(( watcherup / 86400 ))
+	rest=$(( watcherup % 86400 ))
+	echo "     Uptime: $days d, $(date +%H:%M:%S -ud@$rest)"
+
+	# Collect all DROP ipsets from the database
+	mapfile -t drop_ipsets < <(sqlite3 $POOL/$ME "SELECT DISTINCT ipset FROM ipsets WHERE target = 'DROP';")
+
+	# Iterate and sum up counters for each DROP ipset
+	for ipset_name in "${drop_ipsets[@]}"
+	do
+		counter=$(ipset -t list "$ipset_name" | awk '/^Number of packets:/ {print $4}')
+		total_connections=$(( total_connections + counter ))
+	done
+
+	report=$(dropped_packets)
+	echo "$report"
+	total_connections=$( grep "Total DROPed connections" <<< "$report" | awk '{ print $4 }' )
+
+
+	# Get total passed connections (ACCEPT chain)
+	total_passed_connections=$(cummulate_passed_connections)
+
+	# Get total passthru connections (ACCEPT chain) white-bots
+	total_passthru_connections=$(cummulate_passthru_connections)
+
+	# Print the results
+	sec_headline Summary _
+	printf "%34s: %8d\n" "Total DROPed connections" $total_connections
+	printf "%34s: %8d\n" "Total passed connections" $total_passed_connections
+	printf "%34s: %8d\n" "Total passthru connections" $total_passthru_connections
+
+	firewall_records=$(ipset -t list | awk '/Number of/ { sum += $4 } END {print sum}')
+	printf "%34s: %8d\n" "Total records in firewall" $firewall_records
+
+	# Calculate efficiency (avoid division by zero)
+	if [ $((total_connections + total_passed_connections)) -gt 0 ]
+	then
+		PT=$total_passthru_connections
+		efficiency=$(echo "scale=3; ($total_connections / ($total_connections + $total_passed_connections  )) * 100" | bc)
+	else	efficiency="0.00"
+	fi
+
+	if [ $total_connections -gt 0 ]
+	then	
+		read min < $POOL/EFF_MIN
+		read max < $POOL/EFF_MAX
+		invalid=""
+	fi
+
+	echo "$total_connections $total_passed_connections $total_passthru_connections " |\
+	awk 	-v pool="$POOL"			\
+		-v efficiency="$efficiency" 	\
+		-v min_efficiency="$min"	\
+		-v max_efficiency="$max"	\
+		-v invalid="$invalid"		\
+	'
+	BEGIN { }
+	{
+	    total_connections           = $1
+	    total_passed_connections    = $2
+	    total_passthru_connections	= $3
+
+	    #printf "%35s %8.2f%%\n", "Total dropped connections:", 	total_connections/100
+	    #printf "%35s %8.2f%%\n", "Total passed connections:", 	total_passed_connections/100
+	    #printf "%35s %8.2f%%\n", "Total passthru connections:", 	total_passthru_connections/100
+
+	    # Aktualisiere max/min Effizienz nur bei Veränderung
+	    if (efficiency > max_efficiency) {
+		max_efficiency = efficiency
+		print max_efficiency > pool"/EFF_MAX"
+	    }
+
+	    if (efficiency < min_efficiency) {
+		min_efficiency = efficiency
+		print min_efficiency > pool"/EFF_MIN"
+	    }
+
+	    # Ausgabe formatieren
+	    printf "%35s %8.2f%% %s\n", "Efficiency:", efficiency, invalid
+	    printf "%35s %8.2f%% %s\n", ".... min:", min_efficiency, invalid
+	    printf "%35s %8.2f%% %s\n", ".... max:", max_efficiency, invalid
+	}'
+
+#	printf "%35s %8.2f%%\n" "Efficiency:" $efficiency
+
+	sec_headline Legend _
+	echo "
+	passthru 	- Count of 'white bots'
+	TD/TP 		~ Total dropped/passed 
+	Efficiency	= TD / (TD+TP)
+	"
+
+	FILT_END=$(date +%s%3N)
+	FILT_TIME=$(( FILT_END - FILT_START))
+	printf "%s took %d ms\n" $funtag $FILT_TIME
+}
+
+#
+# Collect all packets from chains with a DROP target
+#
+dropped_packets() {
+local funtag="[${FUNCNAME[0]}]"
+local	all resultset total_connections total_packets
+
+	#head -10 <<< "$ALL"	# Compare with the ALL format
+
+	resultset=$( $SQL "
+		SELECT	member, packets, bytes, comment
+		FROM 	ipsets
+		WHERE 	target = 'DROP'
+		;" 
+	)
+	#echo "$resultset"
+	#head -10 <<< "$resultset"
+
+	# Make an ALL format from the DB resultset ...
+	all=$(
+	awk '
+	BEGIN { FS = "|" }
+		{	print
+			printf "%s packets %d bytes %d comment \"%s\"\n", $1, $2 ,$3, $4
+		}
+	' <<< "$resultset" 
+	)
+
+	#echo "All rebuilt:"
+	#head -10 <<< "$all"
+
+	# From here on everything works as before ...
+	# with a proper 'all' provided
+	report=`awk '
+	function drawline (len,char,	i,line) {
+		for (i=1; i<=len; i++) {
+			line = line char
+		}
+		print line
+	}
+
+	/(packets 0)/	{ next }
+			{
+				# Extract IPSET Name ...
+				match($0, /comment "([^"]+)"/, tmp)
+				set = tmp[1]
+
+				if ( set == "" ) { next }
+
+				gsub(" ", "", set)  # Remove spaces from set names
+				sets[set] = set
+
+				# Extract packet count ...
+				match($0, /packets ([0-9]+)/, tmp)
+				packets = tmp[1]
+
+				# Extract byte count ...
+				match($0, /bytes ([0-9]+)/, tmp)
+				bytes = tmp[1]
+
+			#	printf "Packets: %8d, Bytes %15d\n", packets, bytes	# Debug ...
+				packet_sum[set] += packets
+				byte_sum[set] 	+= bytes
+			}
+	END	{
+		 	printf	"%-35s %8s %15s\n", "IPset comment", "Packets","Bytes"
+			#drawline (50,"-")
+			print	"–––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––"
+			asort (sets)
+			for (s in sets) {
+		 		printf "%-35s %8d %15d\n", sets[s], packet_sum[sets[s]], byte_sum[sets[s]]
+				total_packets 	+= packet_sum[sets[s]]
+				total_bytes	+= byte_sum[sets[s]]
+			}
+
+			print	"–––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––"
+		 	printf	"%34s: %8d %15d\n", "Total DROPed connections", total_packets, total_bytes
+	}
+	' <<< $all`
+
+	# Show report on display/stdout
+	echo "$report"
+
+	total_connections=`grep "Total DROPed connections" <<< "$report" | awk '{print $4}'`
+}
+
+
+# vim: set filetype=sh noexpandtab tabstop=8 shiftwidth=8 autoindent smartindent :

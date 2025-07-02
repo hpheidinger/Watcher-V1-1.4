@@ -1,0 +1,83 @@
+#!/bin/bash
+if [[ "$1" == 'debug'  ]]; then set -x;		_DEBUG=$1; shift; fi
+if [[ "$1" == 'debug2' ]]; then set -xvT;	_DEBUG=$1; shift; fi
+if [[ "$1" == 'trace'  ]]; then 		_TRACE=$1; shift; fi
+####################################################################
+############################################################
+# - Whitelist, Master -
+# Run this manually after changes 
+# or from crontab with a short cycle; e.g. 5 minutes
+############################################################
+#------------------------
+REALPATH=`realpath $0`
+WHERE=`dirname $REALPATH`
+ME=`basename $REALPATH`
+cd $WHERE
+. ../system.conf
+. ../watchermap.conf
+. ../common.conf
+. ../common.bashlib
+#------------------------
+# Private stuff
+. ../conf/private/$ME.conf
+
+#
+# Drop ipset ''whitelist' from a chains
+# $1	the chain name; defaults to 'INPUT'
+drop_whitelist() {
+local	chain=${1:-INPUT}
+local   position
+
+	# Delete all occurences of 'whitelist' from the given chain
+	while :;
+       	do
+		position=`$IPTABLES -w -vnL $chain --line-numbers | grep "match-set whitelist" | awk '{print $1}' | head -n 1`
+	        if [ -z "$position" ]
+	       	then break
+		else $IPTABLES -D $chain $position
+	        fi
+	done
+}
+
+#
+# Fill in local whitelist
+#
+ipset -exist create $MYSET $SETTYP $SETOPTS
+
+# Assure we are on-top of any chain
+for c in INPUT FORWARD
+do drop_whitelist $c
+done	
+
+if ! $IPTABLES -nL INPUT | grep "match-set whitelist" | grep -q ACCEPT
+then
+	for c in INPUT FORWARD
+	do $IPTABLES -t filter -I $c -m set --match-set whitelist src -j ACCEPT
+	done	
+fi
+
+if [ -f $MASTER_PATH/whitelist ]
+then
+	for list in whitelist
+	do
+		awk -v setname=$MYSET -v settype="$SETTYP" -v setopts="$SETOPTS" -v loadfile="$LOADFILE" ' 
+		/^$/            { next }
+		/^[ \t]*[#]/    { next }
+				{ IP[$1]=$1 }
+		END {
+			printf "-exist create %s %s %s\n", setname, settype, setopts > loadfile
+
+			for ( ip in IP ) {
+				printf "add %s %s comment whitelisted\n", setname, ip > loadfile
+			}
+		}
+		' $MASTER_PATH/$list
+
+		$IPSET flush $MYSET
+		$IPSET -quiet -file $LOADFILE restore
+	done
+
+	logger	 "$ME[$$] Loaded whitelist from 'whitelist' file in $MASTER_PATH ..."
+else
+	echo 	 "$ME: No 'whitelist' file in $MASTER_PATH ..."
+fi
