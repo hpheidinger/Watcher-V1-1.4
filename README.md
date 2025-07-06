@@ -1,41 +1,42 @@
 # Watcher 1.4 (Production) - README
+The Watcher-V1 series is the rendition for xtables firewalls managed by 'iptables' and 'ipset'.
 
-# Resources:
+# Official Resources:
 ## Official Watcher repository
-
 - [Repository](https://watcher.comserve-it-services.de/repo/)
 
 ## Official Packages
-
 - [Production](https://watcher.comserve-it-services.de/repo/Watcher-1.4-Prod/)
 - [Nightly](https://watcher.comserve-it-services.de/repo/Watcher-1.4-nightly/)
 
 ## Official Documentation
-
 - [Docs](https://watcher.comserve-it-services.de/repo/Docs/)
+- [Master Doc](https://watcher.comserve-it-services.de/repo/Docs/Watcher-Master-V1.4doc.pdf)
+- [Modules Docs](https://watcher.comserve-it-services.de/repo/Docs/)Watcher-Modules-V1.4doc.pdf
 
 # Introduction:
 # 🛡️ Watcher – Driving Attackers Mad
 
-**Watcher is not a script.**  
+**Watcher is not a simple script.**
+Watcher is a program system and a complex framework
 It is a modular, fully automated IDS/IPS framework designed to block potential attackers in real-time, at the firewall level, before your services even become aware of them.
 
 ## What It Does
 
-Watcher continuously monitors service logs (e.g., SSH, web, and mail) in real-time.  
-When suspicious behavior is detected, it immediately blocks the source IP via `iptables` or `nftables` – protecting the services from wasting CPU on known offenders.
+Watcher modules continuously monitor service logs (e.g., SSH, web, and mail) in real-time.  
+When suspicious behavior is detected, it immediately blocks the source IP via `ipset' – protecting the services from wasting CPU on known offenders.
 
 **Its purpose is simple:**  
-Let your services do their job — not log endless abuse from `aa.bb.cc.dd`.
+Let your services do their job — not log endless abuse from IP `aa.bb.cc.dd`.
 
 ## Key Features
 
-- 🔍 Real-time log monitoring
-- 🧩 Modular detection engine (per-service filters)
-- 🔒 Immediate firewall blocking (DROP via iptables/nftables)
-- 📦 No dependencies: no RPM, no APT, no pip – *drop-in, superuser-only*
-- 🔧 Works with syslog/syslog-ng, firewalld, and custom nftables rulesets
-- 📁 Portable, robust – designed for UNIX/Linux environments
+- Real-time log monitoring
+- Modular detection engine (per-service filters)
+- Immediate firewall blocking (DROP via 'ipset')
+- No dependencies: no RPM, no APT, no pip – *drop-in, superuser-only*
+- Works with syslog/syslog-ng
+- Portable, robust – designed for Linux server environments
 
 ## Installation Philosophy
 
