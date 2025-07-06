@@ -12,7 +12,7 @@ The Watcher-V1 series is the rendition for xtables firewalls managed by 'iptable
 ## Official Documentation
 - [Docs](https://watcher.comserve-it-services.de/repo/Docs/)
 - [Master Doc](https://watcher.comserve-it-services.de/repo/Docs/Watcher-Master-V1.4doc.pdf)
-- [Modules Docs](https://watcher.comserve-it-services.de/repo/Docs/Watcher-Modules-V1.4doc.pdf)
+- [Modules Doc](https://watcher.comserve-it-services.de/repo/Docs/Watcher-Modules-V1.4doc.pdf)
 
 # Introduction:
 # 🛡️ Watcher – Driving Attackers Mad
