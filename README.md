@@ -46,6 +46,7 @@ Watcher is **drop-anywhere software**. It is intentionally kept minimalistic:
 # tar xf Watcher.tar
 # cd Watcher
 # ./Prep
+```
 
 ## Watcher efficiency
 
