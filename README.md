@@ -46,3 +46,23 @@ Watcher is **drop-anywhere software**. It is intentionally kept minimalistic:
 # tar xf Watcher.tar
 # cd Watcher
 # ./Prep
+
+## Watcher efficiency
+
+```text
+[root@vmd123606 rules]# Watcher-Report -e | grep 'Summary' -A15
+_____ Summary ________________________________________
+          Total DROPed connections:   106631
+          Total passed connections:    31105
+        Total passthru connections:    28210
+         Total records in firewall:    36678
+                        Efficiency:    77.40% 
+                          .... min:    77.30% 
+                          .... max:    90.80% 
+
+_____ Legend _________________________________________
+	passthru 	- Count of 'white bots'
+	TD/TP 		~ Total dropped/passed 
+	Efficiency	= TD / (TD+TP)
+
+```
