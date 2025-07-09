@@ -14,6 +14,7 @@ The Watcher-V1 series is the rendition for xtables firewalls managed by 'iptable
 - [Master Doc](https://watcher.comserve-it-services.de/repo/Docs/Watcher-Master-V1.4doc.pdf)
 - [Modules Doc](https://watcher.comserve-it-services.de/repo/Docs/Watcher-Modules-V1.4doc.pdf)
 
+
 # Introduction:
 # 🛡️ Watcher – Driving Attackers Mad
 
@@ -29,8 +30,20 @@ When suspicious behavior is detected, it immediately blocks the source IP via `i
 **Its purpose is simple:**  
 Let your services do their job — not log endless abuse from IP `aa.bb.cc.dd`.
 
-## Key Features
+## Watcher characteristics
+Watcher is a reactive event-classification framework and superordinated firewall manager, designed to act as a semantic control layer above conventional filtering systems. It dynamically interprets service events via modular rule sets, assigning behavioral context to each incident, and triggering targeted actions—be it injection, escalation, suppression, or request termination.
 
+Unlike traditional tools, Watcher operates with situational awareness:
+
+    - Recognizes patterns in real-time across service layers
+    - Applies curated response logic based on threat semantics
+    ⚡ Updates rulesets dynamically without service interruption
+
+It’s not just a filter. It’s a strategy engine. 
+Watcher doesn’t wait for threats—it reads them, classifies them, and acts before they escalate.
+
+
+## Key Features
 - Real-time log monitoring
 - Modular detection engine (per-service filters)
 - Immediate firewall blocking (DROP via 'ipset')
