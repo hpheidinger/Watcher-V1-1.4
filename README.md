@@ -16,7 +16,8 @@ The Watcher-V1 series is the rendition for xtables firewalls managed by 'iptable
 
 
 # Introduction:
-# 🛡️ Watcher – Driving Attackers Mad
+# 🛡️ Watcher – The brain above your firewall.
+## ... driving Attackers Mad
 
 **Watcher is not a simple script.**
 Watcher is a **program system** and a **complex framework**
