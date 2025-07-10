@@ -19,10 +19,11 @@ ______________________
 ______________________
 # Introduction:
 # 🛡️ Watcher – The brain above your firewall.
-## ... driving Attackers Mad
+## ... Driving Attackers Mad
 
 **Watcher is not a simple script.**
-Watcher is a **program system** and a **complex framework**
+Watcher is a **program system** and a **complex framework**.
+
 It is a modular, fully automated IDS/IPS framework designed to block potential attackers in real-time, at the firewall level, before your services even become aware of them.
 
 ## What It Does
