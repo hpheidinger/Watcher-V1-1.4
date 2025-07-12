@@ -100,7 +100,7 @@ MAILADDR="root@$REFADDR"
 # Mailbox for reports and statistics (from modules)
 # Can be over-written in a <module>.conf file
 REPORTMAIL="hph@$REFADDR"
-''´
+```
 
 After this Watcher can be activated:
 
