@@ -74,7 +74,7 @@ The Prep routine will then automatically integrate Watcher with your particular 
 Edit 'common.conf' before you activate Watcher for automated startup.
 In particular, this must be changed for self-lockout prevention and notification:
 
-'''text
+```text
 #--------------------------------------------------------------------------------
 # Configuration section
 #--------------------------------------------------------------------------------
