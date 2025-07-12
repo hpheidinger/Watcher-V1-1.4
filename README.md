@@ -36,6 +36,7 @@ Let your services do their job — not log endless abuse from IP `aa.bb.cc.dd`.
 
 ## Watcher characteristics
 Watcher is a reactive event-classification framework and superordinated firewall manager, designed to act as a semantic control layer above conventional filtering systems. It dynamically interprets service events via modular rule sets, assigning behavioral context to each incident, and triggering targeted actions—be it injection, escalation, suppression, or request termination.
+With **over 10 years of development** since the initial revision 1.0, Watcher is very mature, stable, and effective. 
 
 Unlike traditional tools, Watcher operates with situational awareness:
 
@@ -44,25 +45,66 @@ Unlike traditional tools, Watcher operates with situational awareness:
     ⚡ Updates rulesets dynamically without service interruption
 
 It’s not just a filter. It’s a strategy engine. 
-Watcher doesn’t wait for threats—it reads them, classifies them, and acts before they escalate.
+Watcher doesn’t wait for threats — it reads them, classifies them, and acts before they escalate.
 
 
 ## Key Features
 - Real-time log monitoring
 - Modular detection engine (per-service filters)
+- Dynamic rule system for modules with ruleset refresh on-the-fly
 - Immediate firewall blocking (DROP via 'ipset')
-- No dependencies: no RPM, no APT, no pip – *drop-in, superuser-only*
+- No dependencies: no RPM, no APT, no pip
+- superuser-only, no sudo
 - Works with syslog/syslog-ng
 - Portable, robust – designed for Linux server environments
+- Over 30 Watcher tools assist in measuring, navigation, and maintenance tasks
 
 ## Installation Philosophy
-
-Watcher is **drop-anywhere software**. It is intentionally kept minimalistic:
+Watcher is **drop-anywhere software**.
+Due to **strict relative addressing**, Watcher is fully relocatable and can be installed anywhere. 
+The installation is intentionally kept minimalistic:
 
 ```sh
 # tar xf Watcher.tar
 # cd Watcher
 # ./Prep
+```
+
+The Prep routine will then automatically integrate Watcher with your particular Linux server system.
+Edit 'common.conf' before you activate Watcher for automated startup.
+In particular, this must be changed for self-lockout prevention and notification: 
+'''text
+#--------------------------------------------------------------------------------
+# Configuration section
+#--------------------------------------------------------------------------------
+#
+# Protect yourself from lock-out by 'dynamic DNS access'
+#
+# DYN_PROVIDER  ...     is the 'domain name' of your DYN DNS provider
+# DYN_ADDRESS   ...     is the 'hostname', that you have assigned to your router
+#
+#DYN_PROVIDER=79.143.183.251    # DNS of root server hoster
+DYN_PROVIDER=ddnss.de
+DYN_ADDRESS=itcomserve.ddnss.de
+
+# Fully qualified domain name (FQDN) of the server and mailbox for critical events
+# ===================================================================
+# Change this to YOUR reference address - or we get all your mail ;-)
+# ===================================================================
+REFADDR="comserve-it-services.de"
+
+# Mail address for the Watcher administrator
+MAILADDR="root@$REFADDR"
+
+# Mailbox for reports and statistics (from modules)
+# Can be over-written in a <module>.conf file
+REPORTMAIL="hph@$REFADDR"
+''´
+
+After this Watcher can be activated:
+```bash
+systemctl enable watcher
+systemctl start watcher
 ```
 
 ## Watcher efficiency
