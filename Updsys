@@ -1,5 +1,5 @@
 #!/bin/bash
-# Update systen.com after system updates/upgrades
+# Update systen.conf after system updates/upgrades
 versionid=`grep '^VERSION_ID=' /etc/os-release | tr -d "\"" | cut -f2 -d"="`
 target=SYSVERS
 
