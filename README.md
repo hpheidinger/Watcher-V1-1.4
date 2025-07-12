@@ -103,7 +103,7 @@ REPORTMAIL="hph@$REFADDR"
 ''´
 
 After this Watcher can be activated:
-``bash
+```bash
 systemctl enable watcher
 systemctl start watcher
 ``
