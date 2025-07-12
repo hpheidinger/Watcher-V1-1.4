@@ -71,7 +71,7 @@ The installation is intentionally kept minimalistic:
 ```
 
 The Prep routine will then automatically integrate Watcher with your particular Linux server system.
-Edit 'common.conf' before you activate Watcher for automated startup.
+Edit '**common.conf**' before you activate Watcher for automated startup.
 In particular, this must be changed for self-lockout prevention and notification:
 
 ```text
@@ -103,6 +103,7 @@ REPORTMAIL="hph@$REFADDR"
 ''´
 
 After this Watcher can be activated:
+
 ```sh
 systemctl enable watcher
 systemctl start watcher
