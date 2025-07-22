@@ -112,19 +112,21 @@ systemctl start watcher
 ## Watcher efficiency
 
 ```text
-[root@vmd123606 rules]# Watcher-Report -e | grep 'Summary' -A15
-...
+[root@vmd123606 rules]# Watcher-Report -e | grep -A15 "Summary"
 _____ Summary ________________________________________
-          Total DROPed connections:   106631
-          Total passed connections:    31105
-        Total passthru connections:    28210
-         Total records in firewall:    36678
-                        Efficiency:    87.40% 
-                          .... min:    77.30% 
-                          .... max:    93.80% 
+          Total DROPed connections:    30228
+          Total passed connections:     4031
+        Total passthru connections:     3179
+         Total records in firewall:    40389
+                        Efficiency:    88.20% 
+                          .... min:    87.90% 
+                          .... max:    92.40% 
 
 _____ Legend _________________________________________
+
 	passthru 	- Count of 'white bots'
 	TD/TP 		~ Total dropped/passed 
 	Efficiency	= TD / (TD+TP)
+	
+[report_efficiency] took 1530 ms
 ```
