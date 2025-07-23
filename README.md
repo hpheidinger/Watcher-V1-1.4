@@ -62,7 +62,9 @@ Watcher doesn’t wait for threats — it reads them, classifies them, and acts 
 ## Installation Philosophy
 Watcher is **drop-anywhere software**.
 Due to **strict relative addressing**, Watcher is fully relocatable and can be installed anywhere. 
-The installation is intentionally kept minimalistic:
+The installation is intentionally kept minimalistic.
+
+First, decide on which place (directory) to install Watcher. /opt or /root/bin are good candidates.
 
 ```sh
 # tar xf <path to downloaded Watcher.tar>
@@ -109,6 +111,17 @@ After this Watcher can be activated:
 systemctl enable watcher
 systemctl start watcher
 ```
+Watcher is a 'superuser-only' framework as it operates on the kernel firewall. **No sudo!** 
+So integrate '/usr/local/sbin' into the superuser's PATH variable; e.g. in ~/bashrc:
+
+```text
+# last line in superuser's .bashrc
+export PATH=/usr/local:sbin:$PATH
+```
+
+Then close the superuser console and start a new one.
+Watcher is then fully at your command.
+
 
 ## Watcher efficiency
 
