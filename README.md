@@ -58,6 +58,7 @@ Watcher doesn’t wait for threats — it reads them, classifies them, and acts 
 - Works with syslog/syslog-ng
 - Portable, robust – designed for Linux server environments
 - Over 30 Watcher tools assist in measuring, navigation, and maintenance tasks
+- Self-lockout prevention when accessing the server through a router, e.g., in your office
 
 ## Installation Philosophy
 Watcher is **drop-anywhere software**.
