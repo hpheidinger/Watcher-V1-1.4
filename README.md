@@ -70,8 +70,9 @@ The installation is intentionally kept minimalistic:
 # ./Prep
 ```
 
-The Prep routine will then automatically integrate Watcher with your particular Linux server system.
-Edit '**common.conf**' before you activate Watcher for automated startup.
+The Prep routine will analyse the target system, and then **automatically integrates** Watcher with your particular Linux server system. No dependencies with RPM, APT, or other package managers ...
+
+After unpacking, edit '**common.conf**' before you activate Watcher for automated startup.
 In particular, this must be changed for self-lockout prevention and notification:
 
 ```text
