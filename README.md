@@ -111,8 +111,8 @@ After this Watcher can be activated:
 systemctl enable watcher
 systemctl start watcher
 ```
-Watcher is a 'superuser-only' framework as it operates on the kernel firewall. **No sudo!** 
-So integrate '/usr/local/sbin' into the superuser's PATH variable; e.g. in ~/bashrc:
+Watcher is a '**superuser-only' framework** as it operates on the kernel firewall. **No sudo!** 
+So, integrate '/usr/local/sbin' into the superuser's PATH variable; e.g., in ~/bashrc:
 
 ```text
 # last line in superuser's .bashrc
@@ -120,7 +120,7 @@ export PATH=/usr/local:sbin:$PATH
 ```
 
 Then close the superuser console and start a new one.
-Watcher is then fully at your command.
+Watcher is then fully at your command with everything in the Watcher-Toolbox.
 
 
 ## Watcher efficiency
