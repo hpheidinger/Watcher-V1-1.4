@@ -65,7 +65,7 @@ Due to **strict relative addressing**, Watcher is fully relocatable and can be i
 The installation is intentionally kept minimalistic:
 
 ```sh
-# tar xf Watcher.tar
+# tar xf <path to downloaded Watcher.tar>
 # cd Watcher
 # ./Prep
 ```
