@@ -129,19 +129,11 @@ Watcher is then fully at your command with everything in the Watcher-Toolbox.
 ```text
 [root@vmd123606 rules]# Watcher-Report -e | grep -A15 "Summary"
 _____ Summary ________________________________________
-          Total DROPed connections:    30228
-          Total passed connections:     4031
-        Total passthru connections:     3179
-         Total records in firewall:    40389
-                        Efficiency:    88.20% 
-                          .... min:    87.90% 
-                          .... max:    92.40% 
-
-_____ Legend _________________________________________
-
-	passthru 	- Count of 'white bots'
-	TD/TP 		~ Total dropped/passed 
-	Efficiency	= TD / (TD+TP)
-	
-[report_efficiency] took 1530 ms
+          Total DROPed connections:    60209
+          Total passed connections:     2782
+        Total passthru connections:     1025
+         Total records in firewall:    41331
+                        Efficiency:    95.50% 
+                          .... min:    83.50% 
+                          .... max:   100.00% 
 ```
